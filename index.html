@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Год — календарь планов</title>
+<style>
+:root{
+  --bg:#f6f5f1; --surface:#ffffff; --ink:#1d1f23; --muted:#6b7078; --line:#e4e2da;
+  --accent:#2f5d50; --danger:#d1433a; --shadow:0 1px 2px rgba(0,0,0,.05),0 6px 20px rgba(0,0,0,.05);
+  --travel:#3b7dd8; --doc:#d99a1e; --todo:#2f9e6b; --other:#8a5cd0;
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#121413; --surface:#1b1e1c; --ink:#ecefec; --muted:#9aa19c; --line:#2b2f2c; --accent:#6fc2a5; --shadow:none;
+    --travel:#5b9bf0; --doc:#e8b13c; --todo:#4cc490; --other:#a883e6;}
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+
+header.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:14px;height:60px}
+.brand{font-weight:700;font-size:18px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.brand i{width:22px;height:22px;border-radius:7px;background:conic-gradient(var(--travel),var(--doc),var(--todo),var(--other),var(--travel))}
+.spacer{flex:1}
+.btn{white-space:nowrap;border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:10px;font-weight:550}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+@media (prefers-color-scheme:dark){.btn.primary{color:#0e1512}}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--danger)}
+.iconbtn{width:38px;height:38px;padding:0;display:grid;place-items:center;font-size:18px}
+
+.hero{padding:40px 0 18px}
+.hero h1{margin:0 0 8px;font-size:clamp(28px,4.5vw,44px);letter-spacing:-.03em;line-height:1.1}
+.hero p{margin:0;color:var(--muted);max-width:640px;font-size:17px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 16px}
+.stat b{display:block;font-size:22px;letter-spacing:-.02em}
+.stat span{color:var(--muted);font-size:13px}
+
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 0 16px}
+.bar h2{margin:0;font-size:26px;letter-spacing:-.02em;min-width:80px;text-align:center}
+.legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:13px;margin-left:auto}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:11px;height:11px;border-radius:4px;background:var(--c)}
+.ring{width:11px;height:11px;border-radius:4px;border:2px solid var(--danger)}
+
+/* year */
+.year{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:1000px){.year{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){.year{grid-template-columns:repeat(2,1fr);gap:10px}}
+@media(max-width:420px){.year{grid-template-columns:1fr}}
+.mcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;text-align:left;box-shadow:var(--shadow);transition:transform .15s,border-color .15s}
+.mcard:hover{transform:translateY(-2px);border-color:var(--accent)}
+.mcard.current{border-color:var(--accent);border-width:2px;padding:13px}
+.mcard h3{margin:0 0 8px;font-size:15px;text-transform:capitalize;display:flex;justify-content:space-between}
+.mcard h3 small{color:var(--muted);font-weight:500}
+.mini{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.mini .wd{font-size:10px;color:var(--muted);text-align:center}
+.mini .d{aspect-ratio:1;display:grid;place-items:center;font-size:11px;border-radius:6px;position:relative}
+.mini .d.has{color:#fff;font-weight:650;background:var(--bg-d)}
+.mini .d.alldone{opacity:.45}
+.mini .d.over{box-shadow:0 0 0 2px var(--danger)}
+.mini .d.today:not(.has){background:var(--ink);color:var(--surface);font-weight:700}
+.mini .d.today.has{outline:2px solid var(--ink);outline-offset:1px}
+
+/* month detail */
+.mview .nav{display:flex;align-items:center;gap:10px;margin:18px 0}
+.mview .nav h2{margin:0;font-size:26px;letter-spacing:-.02em}
+.msec{margin-bottom:34px}
+.msec .mt{display:flex;align-items:baseline;gap:12px;margin:0 0 10px}
+.msec .mt h3{margin:0;font-size:22px;text-transform:capitalize;letter-spacing:-.02em}
+.msec .mt button.sec{border:0;background:none;color:var(--accent);padding:0;text-decoration:underline}
+.mhead{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+.mhead div{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:0 8px}
+.big{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cell{background:var(--surface);border:1px solid var(--line);border-radius:10px;min-height:118px;padding:6px;display:flex;flex-direction:column;gap:4px;cursor:pointer;position:relative;min-width:0}
+.cell:hover{border-color:var(--accent)}
+.cell.pad{background:transparent;border:0;cursor:default}
+.cell.today{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.cell .n{display:flex;justify-content:space-between;align-items:center;font-weight:650;font-size:13px;padding:0 2px}
+.cell .n em{font-style:normal;color:var(--muted);font-weight:500;font-size:11px;display:none}
+.cell.today .n span:first-child{background:var(--accent);color:var(--surface);border-radius:20px;padding:0 7px}
+.cell .plus{opacity:0;border:0;background:none;color:var(--muted);font-size:16px;line-height:1;padding:0 3px}
+.cell:hover .plus{opacity:1}
+.cell.we .n span:first-child{color:var(--danger)}
+.chip{display:flex;align-items:flex-start;gap:5px;font-size:12.5px;line-height:1.25;padding:3px 6px;border-radius:7px;background:color-mix(in srgb,var(--c) 18%,var(--surface));border-left:3px solid var(--c);cursor:pointer;min-width:0}
+.chip .t{overflow-wrap:anywhere;flex:1}
+.chip:hover{background:color-mix(in srgb,var(--c) 30%,var(--surface))}
+.chip.done .t{text-decoration:line-through;opacity:.55}
+.chip.over{box-shadow:0 0 0 1.5px var(--danger)}
+.chip .chk{flex:none;width:14px;height:14px;margin-top:1px;border:1.8px solid var(--c);border-radius:4px;background:transparent;padding:0;display:grid;place-items:center}
+.chip.done .chk{background:var(--c)}
+.chip.done .chk::after{content:"";width:6px;height:3px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+.chip .fact{flex:none;width:9px;height:9px;margin:3px 2px 0 2px;background:var(--c);transform:rotate(45deg);border-radius:2px}
+.chip .cont{flex:none;color:var(--muted);font-size:11px}
+@media(max-width:760px){
+  .mhead{display:none}
+  .big{grid-template-columns:1fr}
+  .cell.pad{display:none}
+  .cell{min-height:0}
+  .cell .n em{display:inline}
+}
+
+/* todo */
+.todo{margin:44px 0 20px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.todo header{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.todo h2{margin:0;font-size:22px;letter-spacing:-.02em}
+.tabs{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tabs button{border:0;background:none;padding:6px 12px;color:var(--muted)}
+.tabs button.on{background:var(--accent);color:#fff}
+@media (prefers-color-scheme:dark){.tabs button.on{color:#0e1512}}
+.trow{display:flex;align-items:center;gap:12px;padding:10px 4px;border-top:1px solid var(--line)}
+.trow .chip{background:none;border:0;padding:0;gap:0;flex:none}
+.trow .chip .chk{width:20px;height:20px;margin:0}
+.trow .info{flex:1;min-width:0;cursor:pointer}
+.trow .info b{font-weight:600}
+.trow.done .info b{text-decoration:line-through;opacity:.5}
+.trow small{color:var(--muted);display:block}
+.trow small.late{color:var(--danger)}
+.tag{font-size:12px;padding:2px 9px;border-radius:20px;background:color-mix(in srgb,var(--c) 20%,var(--surface));color:var(--ink);white-space:nowrap}
+.empty{color:var(--muted);padding:18px 4px}
+
+footer{color:var(--muted);font-size:13px;padding:10px 0 50px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+footer .link{border:0;background:none;color:var(--accent);text-decoration:underline;padding:0}
+
+/* dialog */
+dialog{border:0;border-radius:18px;padding:0;width:min(480px,calc(100vw - 24px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(10,12,11,.5)}
+form.f{padding:22px;display:grid;gap:14px}
+form.f h3{margin:0;font-size:20px;letter-spacing:-.02em}
+label.l{display:grid;gap:5px;font-size:13px;color:var(--muted)}
+input[type=text],input[type=password],input[type=date],textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%}
+input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+textarea{resize:vertical;min-height:64px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg label{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;display:grid;gap:2px}
+.seg label b{color:var(--ink);font-size:14px}
+.seg label span{font-size:12px;color:var(--muted)}
+.seg input{display:none}
+.seg input:checked+div b{color:var(--accent)}
+.seg label:has(input:checked){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.cats{display:flex;gap:8px;flex-wrap:wrap}
+.cats label{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:20px;padding:6px 12px;cursor:pointer;color:var(--ink);font-size:14px}
+.cats input{display:none}
+.cats label:has(input:checked){border-color:var(--c);background:color-mix(in srgb,var(--c) 18%,var(--surface))}
+.actions{display:flex;gap:8px;align-items:center}
+.donechk{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:14px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><i></i>Год</div>
+    <div class="spacer"></div>
+    <button class="btn ghost" data-act="logout" id="logout" hidden>Выйти</button>
+    <button class="btn" data-act="today">Сегодня</button>
+    <button class="btn primary" data-act="add">+ Добавить</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero" id="hero">
+    <h1>Весь год на одном экране</h1>
+    <p>Путешествия, документы и дела — на календаре. Отмечайте то, что точно будет (факт), и то, что нужно сделать (задача), и закрывайте задачи галочкой.</p>
+    <div class="stats" id="stats"></div>
+  </section>
+  <div id="app"></div>
+
+  <section class="todo" id="todo"></section>
+
+  <footer>
+    <span id="storeNote">Данные хранятся только в этом браузере.</span>
+    <button class="link" data-act="export">Экспорт</button>
+    <button class="link" data-act="import">Импорт</button>
+    <input type="file" id="file" accept="application/json" hidden>
+  </footer>
+</main>
+
+<dialog id="login">
+  <form class="f" id="loginForm">
+    <h3>Вход</h3>
+    <label class="l">Email
+      <input type="text" name="email" autocomplete="username" required>
+    </label>
+    <label class="l">Пароль
+      <input type="password" name="password" autocomplete="current-password" required>
+    </label>
+    <div id="loginErr" style="color:var(--danger);font-size:13px;min-height:1em"></div>
+    <button type="submit" class="btn primary">Войти</button>
+  </form>
+</dialog>
+
+<dialog id="dlg">
+  <form class="f" method="dialog" id="form">
+    <h3 id="dtitle">Новая запись</h3>
+    <label class="l">Название
+      <input type="text" name="title" required maxlength="140" placeholder="Например: Поездка в Стамбул">
+    </label>
+    <div class="seg">
+      <label><input type="radio" name="type" value="fact" checked><div><b>◆ Факт</b><span>Просто событие в календаре</span></div></label>
+      <label><input type="radio" name="type" value="task"><div><b>☑ Задача</b><span>Нужно сделать, можно закрыть</span></div></label>
+    </div>
+    <div class="cats" id="cats"></div>
+    <div class="row2">
+      <label class="l">Дата
+        <input type="date" name="start" required>
+      </label>
+      <label class="l">По (если несколько дней)
+        <input type="date" name="end">
+      </label>
+    </div>
+    <label class="l">Заметка
+      <textarea name="note" placeholder="Номер брони, где лежит документ…"></textarea>
+    </label>
+    <label class="donechk" id="doneRow"><input type="checkbox" name="done"> Выполнено</label>
+    <div class="actions">
+      <button type="button" class="btn danger" id="del">Удалить</button>
+      <div class="spacer"></div>
+      <button type="button" class="btn ghost" id="cancel">Отмена</button>
+      <button type="submit" class="btn primary">Сохранить</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  // Заполните после создания проекта Supabase (Project Settings → API).
+  // anon-ключ публичный: защита держится на правилах доступа в базе (см. supabase.sql).
+  const SUPABASE_URL = 'https://kukgnojboczlqkhgdnde.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_Xc_Ljw7vS35Nz2nGjTTr-g_Y5iIRODO';
+  const remote = !!(SUPABASE_URL && SUPABASE_KEY && window.supabase);
+  const sb = remote ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+  const CATS = {
+    travel: { n: 'Путешествие', c: '#3b7dd8', v: '--travel' },
+    doc:    { n: 'Документы',   c: '#d99a1e', v: '--doc' },
+    todo:   { n: 'Дела',        c: '#2f9e6b', v: '--todo' },
+    other:  { n: 'Другое',      c: '#8a5cd0', v: '--other' },
+  };
+  const KEY = 'year-calendar-v1';
+  const $ = s => document.querySelector(s);
+  const pad = n => String(n).padStart(2, '0');
+  const iso = (y, m, d) => `${y}-${pad(m + 1)}-${pad(d)}`;
+  const todayISO = () => { const t = new Date(); return iso(t.getFullYear(), t.getMonth(), t.getDate()); };
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const monthName = (y, m) => new Date(y, m, 1).toLocaleDateString('ru-RU', { month: 'long' });
+  const fmt = s => new Date(s + 'T00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  const uid = () => crypto.randomUUID();
+
+  let items = [];
+  let view = parseHash();
+  let todoTab = 'open';
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return seed();
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) {} }
+
+  /* ---------- storage: Supabase или localStorage ---------- */
+  const toRow = i => ({ id: i.id, title: i.title, type: i.type, cat: i.cat, start_date: i.start, end_date: i.end || null, note: i.note || '', done: !!i.done });
+  const fromRow = r => ({ id: r.id, title: r.title, type: r.type, cat: r.cat, start: r.start_date, end: r.end_date || '', note: r.note || '', done: r.done });
+
+  async function refresh() {
+    const { data, error } = await sb.from('events').select('*');
+    if (error) return alert('Не удалось загрузить: ' + error.message);
+    items = data.map(fromRow);
+    render();
+  }
+  async function persist(...list) {
+    if (!remote) return save();
+    const { error } = await sb.from('events').upsert(list.map(toRow));
+    if (error) { alert('Не удалось сохранить: ' + error.message); refresh(); }
+  }
+  async function drop(id) {
+    if (!remote) return save();
+    const { error } = await sb.from('events').delete().eq('id', id);
+    if (error) { alert('Не удалось удалить: ' + error.message); refresh(); }
+  }
+
+  const loginDlg = $('#login');
+  loginDlg.addEventListener('cancel', e => e.preventDefault());
+  async function start() {
+    loginDlg.close();
+    $('#logout').hidden = false;
+    $('#storeNote').textContent = 'Календарь общий, синхронизируется между устройствами.';
+    await refresh();
+    sb.channel('events-sync').on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, refresh).subscribe();
+  }
+  async function boot() {
+    if (!remote) { items = load(); render(); return; }
+    render();
+    const { data } = await sb.auth.getSession();
+    if (data.session) start(); else loginDlg.showModal();
+  }
+  $('#loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const f = e.target;
+    const { error } = await sb.auth.signInWithPassword({ email: f.email.value.trim(), password: f.password.value });
+    if (error) { $('#loginErr').textContent = 'Неверный email или пароль'; return; }
+    f.password.value = ''; $('#loginErr').textContent = '';
+    start();
+  });
+  async function logout() {
+    await sb.auth.signOut();
+    await sb.removeAllChannels();
+    items = []; $('#logout').hidden = true; render(); loginDlg.showModal();
+  }
+  function seed() {
+    const t = new Date(), y = t.getFullYear(), m = t.getMonth(), d = t.getDate();
+    const at = (off) => { const x = new Date(y, m, d + off); return iso(x.getFullYear(), x.getMonth(), x.getDate()); };
+    const list = [
+      { id: uid(), title: 'Поездка в Стамбул', type: 'fact', cat: 'travel', start: at(12), end: at(18), note: 'Отель забронирован' },
+      { id: uid(), title: 'Продлить загранпаспорт', type: 'task', cat: 'doc', start: at(7), end: '', done: false, note: '' },
+      { id: uid(), title: 'Купить билеты', type: 'task', cat: 'travel', start: at(3), end: '', done: false, note: '' },
+      { id: uid(), title: 'Оплатить страховку', type: 'task', cat: 'doc', start: at(-2), end: '', done: false, note: '' },
+      { id: uid(), title: 'ДР Миши', type: 'fact', cat: 'other', start: at(20), end: '', note: '' },
+    ];
+    try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) {}
+    return list;
+  }
+
+  function parseHash() {
+    const h = location.hash.slice(1);
+    let m = h.match(/^m=(\d{4})-(\d{1,2})$/);
+    if (m) return { mode: 'month', y: +m[1], m: Math.min(11, Math.max(0, +m[2] - 1)) };
+    m = h.match(/^y=(\d{4})$/);
+    if (m) return { mode: 'year', y: +m[1] };
+    return { mode: 'year', y: new Date().getFullYear() };
+  }
+  function go(v) {
+    view = v;
+    const h = v.mode === 'month' ? `m=${v.y}-${v.m + 1}` : `y=${v.y}`;
+    history.pushState(null, '', '#' + h);
+    render(); window.scrollTo({ top: 0 });
+  }
+  window.addEventListener('popstate', () => { view = parseHash(); render(); });
+
+  const lastDay = it => it.end || it.start;
+  const itemsOn = d => items
+    .filter(i => i.start <= d && d <= lastDay(i))
+    .sort((a, b) => (a.type === b.type ? 0 : a.type === 'task' ? 1 : -1) || (a.done ? 1 : 0) - (b.done ? 1 : 0) || a.title.localeCompare(b.title));
+  const isOver = i => i.type === 'task' && !i.done && lastDay(i) < todayISO();
+
+  /* ---------- render ---------- */
+  function render() {
+    $('#hero').style.display = view.mode === 'year' ? '' : 'none';
+    $('#app').innerHTML = view.mode === 'year' ? yearHTML() : monthViewHTML();
+    renderStats();
+    renderTodo();
+  }
+
+  function renderStats() {
+    const y = view.y;
+    const inYear = items.filter(i => i.start.startsWith(y) || lastDay(i).startsWith(y));
+    const open = items.filter(i => i.type === 'task' && !i.done).length;
+    const over = items.filter(isOver).length;
+    $('#stats').innerHTML =
+      `<div class="stat"><b>${inYear.length}</b><span>записей в ${y}</span></div>` +
+      `<div class="stat"><b>${open}</b><span>открытых задач</span></div>` +
+      `<div class="stat"><b style="color:${over ? 'var(--danger)' : 'inherit'}">${over}</b><span>просрочено</span></div>`;
+  }
+
+  function legend() {
+    return `<div class="legend">` +
+      Object.values(CATS).map(c => `<span><i class="dot" style="--c:var(${c.v})"></i>${c.n}</span>`).join('') +
+      `<span><i class="ring"></i>просроченная задача</span></div>`;
+  }
+
+  function dayBg(list) {
+    const cats = [...new Set(list.map(i => i.cat))].map(k => CATS[k] ? CATS[k].c : CATS.other.c);
+    if (cats.length === 1) return cats[0];
+    const step = 100 / cats.length;
+    return `conic-gradient(${cats.map((c, i) => `${c} ${i * step}% ${(i + 1) * step}%`).join(',')})`;
+  }
+
+  function miniMonth(y, m) {
+    const first = (new Date(y, m, 1).getDay() + 6) % 7;
+    const days = new Date(y, m + 1, 0).getDate();
+    const t = todayISO();
+    let h = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'].map(w => `<div class="wd">${w}</div>`).join('');
+    for (let i = 0; i < first; i++) h += '<div></div>';
+    for (let d = 1; d <= days; d++) {
+      const s = iso(y, m, d), list = itemsOn(s);
+      const cls = ['d'];
+      let style = '';
+      if (list.length) {
+        cls.push('has');
+        style = ` style="background:${dayBg(list)}"`;
+        if (list.every(i => i.type === 'task' && i.done)) cls.push('alldone');
+        if (list.some(isOver)) cls.push('over');
+      }
+      if (s === t) cls.push('today');
+      h += `<div class="${cls.join(' ')}"${style} title="${list.map(i => esc(i.title)).join(', ')}">${d}</div>`;
+    }
+    return `<div class="mini">${h}</div>`;
+  }
+
+  function yearHTML() {
+    const y = view.y, now = new Date();
+    let cards = '';
+    for (let m = 0; m < 12; m++) {
+      const cnt = items.filter(i => i.start.slice(0, 7) <= `${y}-${pad(m + 1)}` && lastDay(i).slice(0, 7) >= `${y}-${pad(m + 1)}`).length;
+      const cur = now.getFullYear() === y && now.getMonth() === m;
+      cards += `<button class="mcard${cur ? ' current' : ''}" data-act="month" data-y="${y}" data-m="${m}">
+        <h3><span>${monthName(y, m)}</span><small>${cnt || ''}</small></h3>${miniMonth(y, m)}</button>`;
+    }
+    return `<div class="bar">
+      <button class="btn iconbtn" data-act="year" data-d="-1" aria-label="Предыдущий год">‹</button>
+      <h2>${y}</h2>
+      <button class="btn iconbtn" data-act="year" data-d="1" aria-label="Следующий год">›</button>
+      ${legend()}
+    </div><div class="year">${cards}</div>`;
+  }
+
+  function bigMonth(y, m) {
+    const first = (new Date(y, m, 1).getDay() + 6) % 7;
+    const days = new Date(y, m + 1, 0).getDate();
+    const t = todayISO();
+    const wds = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
+    let h = '';
+    for (let i = 0; i < first; i++) h += '<div class="cell pad"></div>';
+    for (let d = 1; d <= days; d++) {
+      const s = iso(y, m, d), wd = (first + d - 1) % 7;
+      const chips = itemsOn(s).map(i => chipHTML(i, s)).join('');
+      h += `<div class="cell${s === t ? ' today' : ''}${wd > 4 ? ' we' : ''}" data-act="add" data-date="${s}">
+        <div class="n"><span>${d}</span><em>${wds[wd]}</em><button class="plus" data-act="add" data-date="${s}" aria-label="Добавить">+</button></div>${chips}</div>`;
+    }
+    return `<div class="mhead">${['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map(w => `<div>${w}</div>`).join('')}</div><div class="big">${h}</div>`;
+  }
+
+  function chipHTML(i, day) {
+    const c = CATS[i.cat] || CATS.other;
+    const marker = i.type === 'task'
+      ? `<button class="chk" data-act="toggle" data-id="${i.id}" aria-label="Выполнено"></button>`
+      : `<span class="fact"></span>`;
+    const cont = i.start !== day ? `<span class="cont">↳</span>` : '';
+    return `<div class="chip ${i.type}${i.done ? ' done' : ''}${isOver(i) ? ' over' : ''}" style="--c:var(${c.v})" data-act="edit" data-id="${i.id}" title="${esc(i.note || '')}">${marker}${cont}<span class="t">${esc(i.title)}</span></div>`;
+  }
+
+  function monthViewHTML() {
+    const { y, m } = view;
+    const n = new Date(y, m + 1, 1), ny = n.getFullYear(), nm = n.getMonth();
+    const sec = (yy, mm, primary) => `<section class="msec">
+      <div class="mt"><h3>${monthName(yy, mm)} ${yy}</h3>${primary ? '' : `<button class="sec" data-act="month" data-y="${yy}" data-m="${mm}">сделать главным</button>`}</div>
+      ${bigMonth(yy, mm)}</section>`;
+    return `<div class="mview">
+      <div class="nav">
+        <button class="btn" data-act="year-view">← ${y}</button>
+        <button class="btn iconbtn" data-act="step" data-d="-1" aria-label="Назад">‹</button>
+        <button class="btn iconbtn" data-act="step" data-d="1" aria-label="Вперёд">›</button>
+        <div class="spacer"></div>${legend()}
+      </div>
+      ${sec(y, m, true)}${sec(ny, nm, false)}
+    </div>`;
+  }
+
+  function renderTodo() {
+    const t = todayISO();
+    let list = items.filter(i => i.type === 'task');
+    const open = list.filter(i => !i.done).sort((a, b) => a.start.localeCompare(b.start));
+    const done = list.filter(i => i.done).sort((a, b) => b.start.localeCompare(a.start));
+    const shown = todoTab === 'open' ? open : done;
+    const rows = shown.map(i => {
+      const c = CATS[i.cat] || CATS.other;
+      const late = isOver(i);
+      const when = i.end ? `${fmt(i.start)} — ${fmt(i.end)}` : fmt(i.start);
+      return `<div class="trow${i.done ? ' done' : ''}" style="--c:var(${c.v})">
+        <div class="chip ${i.done ? 'done' : ''}" style="--c:var(${c.v})"><button class="chk" data-act="toggle" data-id="${i.id}" aria-label="Выполнено"></button></div>
+        <div class="info" data-act="edit" data-id="${i.id}"><b>${esc(i.title)}</b><small class="${late ? 'late' : ''}">${when}${late ? ' · просрочено' : i.start === t ? ' · сегодня' : ''}</small></div>
+        <span class="tag">${c.n}</span></div>`;
+    }).join('');
+    $('#todo').innerHTML = `<header><h2>Задачи</h2>
+      <div class="tabs"><button data-act="tab" data-tab="open" class="${todoTab === 'open' ? 'on' : ''}">Открытые · ${open.length}</button>
+      <button data-act="tab" data-tab="done" class="${todoTab === 'done' ? 'on' : ''}">Выполненные · ${done.length}</button></div>
+      <div class="spacer"></div><button class="btn" data-act="add-task">+ Задача</button></header>
+      ${rows || `<div class="empty">${todoTab === 'open' ? 'Открытых задач нет — отличный день.' : 'Пока ничего не выполнено.'}</div>`}`;
+  }
+
+  /* ---------- dialog ---------- */
+  const dlg = $('#dlg'), form = $('#form');
+  $('#cats').innerHTML = Object.entries(CATS).map(([k, c], i) =>
+    `<label style="--c:var(${c.v})"><input type="radio" name="cat" value="${k}"${i === 0 ? ' checked' : ''}><i class="dot" style="--c:var(${c.v})"></i>${c.n}</label>`).join('');
+  let editing = null;
+
+  function openDialog(item, defaults = {}) {
+    editing = item || null;
+    $('#dtitle').textContent = item ? 'Редактировать' : 'Новая запись';
+    $('#del').style.display = item ? '' : 'none';
+    const v = item || { title: '', type: 'fact', cat: 'travel', start: todayISO(), end: '', note: '', done: false, ...defaults };
+    form.title.value = v.title;
+    form.type.value = v.type;
+    form.cat.value = v.cat;
+    form.start.value = v.start;
+    form.end.value = v.end || '';
+    form.note.value = v.note || '';
+    form.done.checked = !!v.done;
+    syncDone();
+    dlg.showModal();
+    form.title.focus();
+  }
+  const syncDone = () => { $('#doneRow').style.display = form.type.value === 'task' ? '' : 'none'; };
+  form.addEventListener('change', e => { if (e.target.name === 'type') syncDone(); });
+  $('#cancel').onclick = () => dlg.close();
+  dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+  $('#del').onclick = () => {
+    if (editing && confirm('Удалить запись?')) { const id = editing.id; items = items.filter(i => i !== editing); dlg.close(); render(); drop(id); }
+  };
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    let start = form.start.value, end = form.end.value;
+    if (end && end < start) [start, end] = [end, start];
+    if (end === start) end = '';
+    const data = {
+      title: form.title.value.trim(), type: form.type.value, cat: form.cat.value,
+      start, end, note: form.note.value.trim(), done: form.type.value === 'task' && form.done.checked,
+    };
+    if (!data.title) return;
+    let rec = editing;
+    if (rec) Object.assign(rec, data); else { rec = { id: uid(), ...data }; items.push(rec); }
+    dlg.close(); render(); persist(rec);
+  });
+
+  /* ---------- events ---------- */
+  document.addEventListener('click', e => {
+    const el = e.target.closest('[data-act]');
+    if (!el) return;
+    const a = el.dataset.act, find = id => items.find(i => i.id === id);
+    if (a === 'toggle') { e.stopPropagation(); const i = find(el.dataset.id); i.done = !i.done; render(); persist(i); }
+    else if (a === 'edit') { e.stopPropagation(); openDialog(find(el.dataset.id)); }
+    else if (a === 'add') { e.stopPropagation(); openDialog(null, { start: el.dataset.date || todayISO() }); }
+    else if (a === 'add-task') openDialog(null, { type: 'task', cat: 'todo' });
+    else if (a === 'month') go({ mode: 'month', y: +el.dataset.y, m: +el.dataset.m });
+    else if (a === 'year-view') go({ mode: 'year', y: view.y });
+    else if (a === 'year') go({ mode: 'year', y: view.y + +el.dataset.d });
+    else if (a === 'step') { const n = new Date(view.y, view.m + +el.dataset.d, 1); go({ mode: 'month', y: n.getFullYear(), m: n.getMonth() }); }
+    else if (a === 'today') { const n = new Date(); go({ mode: 'year', y: n.getFullYear() }); }
+    else if (a === 'tab') { todoTab = el.dataset.tab; renderTodo(); }
+    else if (a === 'export') {
+      const url = URL.createObjectURL(new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' }));
+      const l = document.createElement('a'); l.href = url; l.download = 'calendar.json'; l.click(); URL.revokeObjectURL(url);
+    }
+    else if (a === 'import') $('#file').click();
+    else if (a === 'logout') logout();
+  });
+  $('#file').addEventListener('change', async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      if (!Array.isArray(data)) throw 0;
+      items = data.filter(i => i && i.title && /^\d{4}-\d{2}-\d{2}$/.test(i.start)).map(i => ({ id: uid(), type: 'fact', cat: 'other', ...i }));
+      render(); persist(...items);
+    } catch (err) { alert('Не удалось прочитать файл'); }
+    e.target.value = '';
+  });
+
+  boot();
+})();
+</script>
+</body>
+</html>
