@@ -4,20 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Год — календарь планов</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f6f5f1; --surface:#ffffff; --ink:#1d1f23; --muted:#6b7078; --line:#e4e2da;
-  --accent:#2f5d50; --danger:#d1433a; --shadow:0 1px 2px rgba(0,0,0,.05),0 6px 20px rgba(0,0,0,.05);
-  --travel:#3b7dd8; --doc:#d99a1e; --todo:#2f9e6b; --other:#8a5cd0;
-  --radius:14px;
-}
-@media (prefers-color-scheme:dark){
-  :root{--bg:#121413; --surface:#1b1e1c; --ink:#ecefec; --muted:#9aa19c; --line:#2b2f2c; --accent:#6fc2a5; --shadow:none;
-    --travel:#5b9bf0; --doc:#e8b13c; --todo:#4cc490; --other:#a883e6;}
+  color-scheme:light;
+  --bg:#fbf9f5; --surface:#ffffff; --ink:#23262b; --muted:#7b7f87; --line:#ebe7df;
+  --accent:#e0664a; --accent-soft:#fdeee9; --danger:#d83a4a;
+  --shadow:0 1px 2px rgba(60,40,20,.04),0 8px 24px rgba(60,40,20,.06);
+  --travel:#4a8fe7; --doc:#f0a93b; --todo:#3dbb8a; --other:#a87ae0;
+  --radius:18px;
+  --display:"Fraunces",Georgia,serif;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{margin:0;background:radial-gradient(900px 420px at 85% -80px,#ffe9df 0,transparent 70%),radial-gradient(700px 380px at -5% 120px,#e7f1ff 0,transparent 70%),var(--bg);background-repeat:no-repeat;color:var(--ink);font:15px/1.45 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3,.brand{font-family:var(--display);font-weight:600}
 button{font:inherit;color:inherit;cursor:pointer}
 .wrap{max-width:1240px;margin:0 auto;padding:0 20px}
 
@@ -28,17 +30,17 @@ header.top .wrap{display:flex;align-items:center;gap:14px;height:60px}
 .spacer{flex:1}
 .btn{white-space:nowrap;border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:10px;font-weight:550}
 .btn:hover{border-color:var(--accent)}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-@media (prefers-color-scheme:dark){.btn.primary{color:#0e1512}}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 4px 12px rgba(224,102,74,.3)}
+.btn.primary:hover{filter:brightness(1.05)}
 .btn.ghost{background:transparent}
 .btn.danger{color:var(--danger)}
 .iconbtn{width:38px;height:38px;padding:0;display:grid;place-items:center;font-size:18px}
 
 .hero{padding:40px 0 18px}
-.hero h1{margin:0 0 8px;font-size:clamp(28px,4.5vw,44px);letter-spacing:-.03em;line-height:1.1}
+.hero h1{margin:0 0 10px;font-size:clamp(32px,5vw,56px);letter-spacing:-.02em;line-height:1.05}
 .hero p{margin:0;color:var(--muted);max-width:640px;font-size:17px}
 .stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
-.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 16px}
+.stat{background:rgba(255,255,255,.75);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:14px;padding:12px 18px;box-shadow:var(--shadow)}
 .stat b{display:block;font-size:22px;letter-spacing:-.02em}
 .stat span{color:var(--muted);font-size:13px}
 
@@ -55,9 +57,10 @@ header.top .wrap{display:flex;align-items:center;gap:14px;height:60px}
 @media(max-width:700px){.year{grid-template-columns:repeat(2,1fr);gap:10px}}
 @media(max-width:420px){.year{grid-template-columns:1fr}}
 .mcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;text-align:left;box-shadow:var(--shadow);transition:transform .15s,border-color .15s}
-.mcard:hover{transform:translateY(-2px);border-color:var(--accent)}
-.mcard.current{border-color:var(--accent);border-width:2px;padding:13px}
-.mcard h3{margin:0 0 8px;font-size:15px;text-transform:capitalize;display:flex;justify-content:space-between}
+.mcard:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 12px 30px rgba(60,40,20,.1)}
+.mcard.current{border-color:var(--accent);background:linear-gradient(180deg,var(--accent-soft),var(--surface) 55%);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent),var(--shadow)}
+.mcard.current h3 span::after{content:" · сейчас";color:var(--accent);font-size:12px;font-weight:500;font-family:Inter,sans-serif}
+.mcard h3{margin:0 0 10px;font-size:18px;text-transform:capitalize;display:flex;justify-content:space-between}
 .mcard h3 small{color:var(--muted);font-weight:500}
 .mini{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 .mini .wd{font-size:10px;color:var(--muted);text-align:center}
@@ -113,7 +116,6 @@ header.top .wrap{display:flex;align-items:center;gap:14px;height:60px}
 .tabs{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .tabs button{border:0;background:none;padding:6px 12px;color:var(--muted)}
 .tabs button.on{background:var(--accent);color:#fff}
-@media (prefers-color-scheme:dark){.tabs button.on{color:#0e1512}}
 .trow{display:flex;align-items:center;gap:12px;padding:10px 4px;border-top:1px solid var(--line)}
 .trow .chip{background:none;border:0;padding:0;gap:0;flex:none}
 .trow .chip .chk{width:20px;height:20px;margin:0}
@@ -257,6 +259,14 @@ textarea{resize:vertical;min-height:64px}
   let items = [];
   let view = parseHash();
   let todoTab = 'open';
+  let needScroll = false;
+
+  function scrollToNow() {
+    const el = view.mode === 'year' ? document.querySelector('.mcard.current') : document.querySelector('.cell.today');
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY - (view.mode === 'year' ? 90 : window.innerHeight / 3);
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  }
 
   function load() {
     try {
@@ -293,12 +303,13 @@ textarea{resize:vertical;min-height:64px}
   async function start() {
     loginDlg.close();
     $('#logout').hidden = false;
+    needScroll = true;
     $('#storeNote').textContent = 'Календарь общий, синхронизируется между устройствами.';
     await refresh();
     sb.channel('events-sync').on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, refresh).subscribe();
   }
   async function boot() {
-    if (!remote) { items = load(); render(); return; }
+    if (!remote) { items = load(); needScroll = true; render(); return; }
     render();
     const { data } = await sb.auth.getSession();
     if (data.session) start(); else loginDlg.showModal();
@@ -342,7 +353,8 @@ textarea{resize:vertical;min-height:64px}
     view = v;
     const h = v.mode === 'month' ? `m=${v.y}-${v.m + 1}` : `y=${v.y}`;
     history.pushState(null, '', '#' + h);
-    render(); window.scrollTo({ top: 0 });
+    if (!needScroll) window.scrollTo({ top: 0 });
+    render();
   }
   window.addEventListener('popstate', () => { view = parseHash(); render(); });
 
@@ -358,6 +370,7 @@ textarea{resize:vertical;min-height:64px}
     $('#app').innerHTML = view.mode === 'year' ? yearHTML() : monthViewHTML();
     renderStats();
     renderTodo();
+    if (needScroll) { needScroll = false; setTimeout(scrollToNow, 60); }
   }
 
   function renderStats() {
@@ -544,7 +557,7 @@ textarea{resize:vertical;min-height:64px}
     else if (a === 'year-view') go({ mode: 'year', y: view.y });
     else if (a === 'year') go({ mode: 'year', y: view.y + +el.dataset.d });
     else if (a === 'step') { const n = new Date(view.y, view.m + +el.dataset.d, 1); go({ mode: 'month', y: n.getFullYear(), m: n.getMonth() }); }
-    else if (a === 'today') { const n = new Date(); go({ mode: 'year', y: n.getFullYear() }); }
+    else if (a === 'today') { needScroll = true; const n = new Date(); go({ mode: 'year', y: n.getFullYear() }); }
     else if (a === 'tab') { todoTab = el.dataset.tab; renderTodo(); }
     else if (a === 'export') {
       const url = URL.createObjectURL(new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' }));
