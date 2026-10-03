@@ -132,6 +132,9 @@ footer .link{border:0;background:none;color:var(--accent);text-decoration:underl
 
 /* dialog */
 dialog{border:0;border-radius:18px;padding:0;width:min(480px,calc(100vw - 24px));background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog.wide{width:min(860px,calc(100vw - 24px))}
+#notionFrame{width:100%;height:60vh;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+.nhint{font-size:12px;color:var(--muted);margin:0}
 dialog::backdrop{background:rgba(10,12,11,.5)}
 form.f{padding:22px;display:grid;gap:14px}
 form.f h3{margin:0;font-size:20px;letter-spacing:-.02em}
@@ -220,6 +223,15 @@ textarea{resize:vertical;min-height:64px}
     <label class="l">Заметка
       <textarea name="note" placeholder="Номер брони, где лежит документ…"></textarea>
     </label>
+    <label class="l">Страница Notion (ссылка)
+      <input type="text" name="notion" inputmode="url" placeholder="https://…notion.site/… или app.notion.com/…">
+    </label>
+    <div class="actions" id="notionRow" hidden>
+      <a class="btn" id="notionOpen" target="_blank" rel="noopener noreferrer">Открыть в Notion ↗</a>
+      <button type="button" class="btn" id="notionEmbed">Показать здесь</button>
+    </div>
+    <p class="nhint" id="notionHint" hidden>Встроенный просмотр работает только для опубликованных страниц (Share → Publish). Закрытые открывайте кнопкой «Открыть в Notion».</p>
+    <iframe id="notionFrame" hidden loading="lazy" referrerpolicy="no-referrer"></iframe>
     <label class="donechk" id="doneRow"><input type="checkbox" name="done"> Выполнено</label>
     <div class="actions">
       <button type="button" class="btn danger" id="del">Удалить</button>
@@ -278,8 +290,8 @@ textarea{resize:vertical;min-height:64px}
   function save() { try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) {} }
 
   /* ---------- storage: Supabase или localStorage ---------- */
-  const toRow = i => ({ id: i.id, title: i.title, type: i.type, cat: i.cat, start_date: i.start, end_date: i.end || null, note: i.note || '', done: !!i.done });
-  const fromRow = r => ({ id: r.id, title: r.title, type: r.type, cat: r.cat, start: r.start_date, end: r.end_date || '', note: r.note || '', done: r.done });
+  const toRow = i => ({ id: i.id, title: i.title, type: i.type, cat: i.cat, start_date: i.start, end_date: i.end || null, note: i.note || '', done: !!i.done, ...(i.notion ? { notion_url: i.notion } : {}) });
+  const fromRow = r => ({ id: r.id, title: r.title, type: r.type, cat: r.cat, start: r.start_date, end: r.end_date || '', note: r.note || '', done: r.done, notion: r.notion_url || '' });
 
   async function refresh() {
     const { data, error } = await sb.from('events').select('*');
@@ -518,10 +530,33 @@ textarea{resize:vertical;min-height:64px}
     form.end.value = v.end || '';
     form.note.value = v.note || '';
     form.done.checked = !!v.done;
+    form.notion.value = v.notion || '';
+    syncNotion(true);
     syncDone();
     dlg.showModal();
     form.title.focus();
   }
+  const safeURL = u => { try { const x = new URL(u.trim()); return x.protocol === 'https:' ? x : null; } catch (e) { return null; } };
+  const embedURL = x => {
+    if (x.hostname.endsWith('.notion.site') && !x.pathname.includes('/ebd/')) {
+      const id = (x.pathname.match(/[0-9a-f]{32}/i) || [])[0];
+      if (id) return `${x.origin}/ebd/${id}`;
+    }
+    return x.href;
+  };
+  function syncNotion(reset) {
+    const x = safeURL(form.notion.value);
+    $('#notionRow').hidden = !x; $('#notionHint').hidden = !x;
+    if (x) $('#notionOpen').href = x.href;
+    if (reset || !x) { $('#notionFrame').hidden = true; $('#notionFrame').removeAttribute('src'); dlg.classList.remove('wide'); $('#notionEmbed').textContent = 'Показать здесь'; }
+  }
+  form.notion.addEventListener('input', () => syncNotion(false));
+  $('#notionEmbed').onclick = () => {
+    const fr = $('#notionFrame'), x = safeURL(form.notion.value);
+    if (!x) return;
+    if (fr.hidden) { fr.src = embedURL(x); fr.hidden = false; dlg.classList.add('wide'); $('#notionEmbed').textContent = 'Скрыть'; }
+    else syncNotion(true);
+  };
   const syncDone = () => { $('#doneRow').style.display = form.type.value === 'task' ? '' : 'none'; };
   form.addEventListener('change', e => { if (e.target.name === 'type') syncDone(); });
   $('#cancel').onclick = () => dlg.close();
@@ -536,7 +571,7 @@ textarea{resize:vertical;min-height:64px}
     if (end === start) end = '';
     const data = {
       title: form.title.value.trim(), type: form.type.value, cat: form.cat.value,
-      start, end, note: form.note.value.trim(), done: form.type.value === 'task' && form.done.checked,
+      start, end, note: form.note.value.trim(), notion: (safeURL(form.notion.value) || { href: '' }).href, done: form.type.value === 'task' && form.done.checked,
     };
     if (!data.title) return;
     let rec = editing;
