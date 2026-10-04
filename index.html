@@ -155,6 +155,34 @@ textarea{resize:vertical;min-height:64px}
 .cats input{display:none}
 .cats label:has(input:checked){border-color:var(--c);background:color-mix(in srgb,var(--c) 18%,var(--surface))}
 .actions{display:flex;gap:8px;align-items:center}
+select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%}
+.seg.seg3{grid-template-columns:repeat(3,1fr)}
+.seg.seg3 label{padding:8px 10px;text-align:center}
+.chip .rep,.trow .rep{flex:none;color:var(--muted);font-size:11px;font-weight:400}
+
+/* board */
+.board{margin:6px 0 26px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.board>header{display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap;margin-bottom:14px}
+.board h2{margin:0;font-size:22px;letter-spacing:-.02em}
+.board .sub{color:var(--muted);font-size:13px}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media(max-width:760px){.cols{grid-template-columns:repeat(3,82%);overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px}}
+.col{background:var(--bg);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px;min-height:96px;scroll-snap-align:start;border:1.5px dashed transparent;transition:border-color .15s}
+.col.over{border-color:var(--accent);background:var(--accent-soft)}
+.col h4{margin:0 4px 2px;font:600 12px/1.4 Inter,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:flex;justify-content:space-between}
+.kcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;box-shadow:0 1px 2px rgba(60,40,20,.05);transition:border-color .15s,transform .15s}
+.kcard:hover{border-color:var(--accent);transform:translateY(-1px)}
+.kcard b{display:block;font-weight:600;font-size:14px;overflow-wrap:anywhere}
+.kcard p{margin:4px 0 0;color:var(--muted);font-size:12.5px;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.col[data-status=done] .kcard{opacity:.75}
+.kfoot{display:flex;align-items:center;gap:5px;margin-top:9px;flex-wrap:wrap}
+.kfoot .arrow{color:var(--muted);font-size:12px}
+.av{width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;font-size:11px;font-weight:700;color:#fff;background:var(--c);flex:none}
+.kbtn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:3px 9px;font-size:12px;font-weight:550;white-space:nowrap}
+.kbtn:hover{border-color:var(--accent);color:var(--accent)}
+.kbtn.go{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
+.cempty{color:var(--muted);font-size:12.5px;padding:10px 4px;text-align:center}
+.col .more{font-size:12px;color:var(--muted);text-align:center}
 .donechk{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:14px}
 </style>
 </head>
@@ -163,6 +191,7 @@ textarea{resize:vertical;min-height:64px}
   <div class="wrap">
     <div class="brand"><i></i>Год</div>
     <div class="spacer"></div>
+    <button class="btn ghost" data-act="board" id="boardBtn">Без даты</button>
     <button class="btn ghost" data-act="logout" id="logout" hidden>Выйти</button>
     <button class="btn" data-act="today">Сегодня</button>
     <button class="btn primary" data-act="add">+ Добавить</button>
@@ -175,6 +204,7 @@ textarea{resize:vertical;min-height:64px}
     <p>Путешествия, документы и дела — на календаре. Отмечайте то, что точно будет (факт), и то, что нужно сделать (задача), и закрывайте задачи галочкой.</p>
     <div class="stats" id="stats"></div>
   </section>
+  <section class="board" id="board"></section>
   <div id="app"></div>
 
   <section class="todo" id="todo"></section>
@@ -201,6 +231,31 @@ textarea{resize:vertical;min-height:64px}
   </form>
 </dialog>
 
+<dialog id="cardDlg">
+  <form class="f" id="cardForm">
+    <h3 id="ctitle">Новая карточка</h3>
+    <label class="l">Что нужно сделать
+      <input type="text" name="title" required maxlength="140" placeholder="Например: записаться к врачу">
+    </label>
+    <label class="l">Подробности
+      <textarea name="note" placeholder="К какому врачу, когда удобно, что взять с собой…"></textarea>
+    </label>
+    <div class="seg seg3">
+      <label><input type="radio" name="status" value="todo" checked><div><b>Нужно сделать</b></div></label>
+      <label><input type="radio" name="status" value="doing"><div><b>В работе</b></div></label>
+      <label><input type="radio" name="status" value="done"><div><b>Готово</b></div></label>
+    </div>
+    <p class="nhint" id="cardMeta"></p>
+    <div class="actions" style="flex-wrap:wrap">
+      <button type="button" class="btn danger" id="cdel">Удалить</button>
+      <div class="spacer"></div>
+      <button type="button" class="btn" id="csched">📅 Назначить дату</button>
+      <button type="button" class="btn ghost" id="ccancel">Отмена</button>
+      <button type="submit" class="btn primary">Сохранить</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="dlg">
   <form class="f" method="dialog" id="form">
     <h3 id="dtitle">Новая запись</h3>
@@ -220,6 +275,15 @@ textarea{resize:vertical;min-height:64px}
         <input type="date" name="end">
       </label>
     </div>
+    <div class="row2">
+      <label class="l">Повтор
+        <select name="repeat"></select>
+      </label>
+      <label class="l" id="untilRow">До (необязательно)
+        <input type="date" name="until">
+      </label>
+    </div>
+    <p class="nhint" id="repeatHint" hidden>Повторяющееся событие: изменения применяются ко всем повторам. Задачи отмечаются галочкой отдельно для каждого дня.</p>
     <label class="l">Заметка
       <textarea name="note" placeholder="Номер брони, где лежит документ…"></textarea>
     </label>
@@ -253,12 +317,13 @@ textarea{resize:vertical;min-height:64px}
   const sb = remote ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
   const CATS = {
-    travel: { n: 'Путешествие', c: '#3b7dd8', v: '--travel' },
-    doc:    { n: 'Документы',   c: '#d99a1e', v: '--doc' },
-    todo:   { n: 'Дела',        c: '#2f9e6b', v: '--todo' },
-    other:  { n: 'Другое',      c: '#8a5cd0', v: '--other' },
+    travel: { n: 'Путешествие', c: '#4a8fe7', v: '--travel' },
+    doc:    { n: 'Документы',   c: '#f0a93b', v: '--doc' },
+    todo:   { n: 'Дела',        c: '#3dbb8a', v: '--todo' },
+    other:  { n: 'Другое',      c: '#a87ae0', v: '--other' },
   };
-  const KEY = 'year-calendar-v1';
+  const COLS = { todo: 'Нужно сделать', doing: 'В работе', done: 'Готово' };
+  const KEY = 'year-calendar-v1', CKEY = 'year-calendar-cards-v1';
   const $ = s => document.querySelector(s);
   const pad = n => String(n).padStart(2, '0');
   const iso = (y, m, d) => `${y}-${pad(m + 1)}-${pad(d)}`;
@@ -266,78 +331,107 @@ textarea{resize:vertical;min-height:64px}
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const monthName = (y, m) => new Date(y, m, 1).toLocaleDateString('ru-RU', { month: 'long' });
   const fmt = s => new Date(s + 'T00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  const fmtShort = s => new Date(s + 'T00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
   const uid = () => crypto.randomUUID();
+  const daysIn = (y, m) => new Date(y, m + 1, 0).getDate();
 
   let items = [];
+  let cards = [];
+  let me = 'я';
+  let cardsMissing = false;
   let view = parseHash();
   let todoTab = 'open';
-  let needScroll = false;
+  let scrollTarget = null;
 
-  function scrollToNow() {
-    const el = view.mode === 'year' ? document.querySelector('.mcard.current') : document.querySelector('.cell.today');
+  function scrollToTarget() {
+    const el = scrollTarget === 'board' ? $('#board')
+      : view.mode === 'year' ? $('.mcard.current') : $('.cell.today');
+    const t = scrollTarget; scrollTarget = null;
     if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY - (view.mode === 'year' ? 90 : window.innerHeight / 3);
-    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    const off = t === 'board' || view.mode === 'year' ? 90 : window.innerHeight / 3;
+    window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - off), behavior: 'smooth' });
   }
 
+  /* ---------- local storage ---------- */
   function load() {
     try {
       const raw = localStorage.getItem(KEY);
+      cards = JSON.parse(localStorage.getItem(CKEY) || '[]');
       if (raw) return JSON.parse(raw);
     } catch (e) {}
     return seed();
   }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) {} }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(items)); localStorage.setItem(CKEY, JSON.stringify(cards)); } catch (e) {}
+  }
 
   /* ---------- storage: Supabase или localStorage ---------- */
-  const toRow = i => ({ id: i.id, title: i.title, type: i.type, cat: i.cat, start_date: i.start, end_date: i.end || null, note: i.note || '', done: !!i.done, ...(i.notion ? { notion_url: i.notion } : {}) });
-  const fromRow = r => ({ id: r.id, title: r.title, type: r.type, cat: r.cat, start: r.start_date, end: r.end_date || '', note: r.note || '', done: r.done, notion: r.notion_url || '' });
+  const ROWS = {
+    events: {
+      to: i => ({ id: i.id, title: i.title, type: i.type, cat: i.cat, start_date: i.start, end_date: i.end || null, note: i.note || '',
+        done: !!i.done, notion_url: i.notion || null, repeat: i.repeat || null, repeat_until: i.until || null, done_dates: i.doneDates || [] }),
+      from: r => ({ id: r.id, title: r.title, type: r.type, cat: r.cat, start: r.start_date, end: r.end_date || '', note: r.note || '',
+        done: r.done, notion: r.notion_url || '', repeat: r.repeat || '', until: r.repeat_until || '', doneDates: r.done_dates || [] }),
+    },
+    cards: {
+      to: c => ({ id: c.id, title: c.title, note: c.note || '', status: c.status, author: c.author || null, assignee: c.assignee || null, event_id: c.eventId || null }),
+      from: r => ({ id: r.id, title: r.title, note: r.note || '', status: r.status, author: r.author || '', assignee: r.assignee || '', eventId: r.event_id || '', created: r.created_at }),
+    },
+  };
+  const MIGRATE = '\n\nПохоже, база не обновлена: выполните supabase-update.sql в Supabase → SQL Editor.';
 
   async function refresh() {
-    const { data, error } = await sb.from('events').select('*');
-    if (error) return alert('Не удалось загрузить: ' + error.message);
-    items = data.map(fromRow);
+    const [ev, cd] = await Promise.all([sb.from('events').select('*'), sb.from('cards').select('*')]);
+    if (ev.error) return alert('Не удалось загрузить: ' + ev.error.message);
+    items = ev.data.map(ROWS.events.from);
+    cardsMissing = !!cd.error;
+    cards = cd.error ? [] : cd.data.map(ROWS.cards.from);
     render();
   }
-  async function persist(...list) {
+  async function persist(table, ...list) {
     if (!remote) return save();
-    const { error } = await sb.from('events').upsert(list.map(toRow));
-    if (error) { alert('Не удалось сохранить: ' + error.message); refresh(); }
+    const { error } = await sb.from(table).upsert(list.map(ROWS[table].to));
+    if (error) { alert('Не удалось сохранить: ' + error.message + MIGRATE); refresh(); return false; }
+    return true;
   }
-  async function drop(id) {
+  async function drop(table, id) {
     if (!remote) return save();
-    const { error } = await sb.from('events').delete().eq('id', id);
+    const { error } = await sb.from(table).delete().eq('id', id);
     if (error) { alert('Не удалось удалить: ' + error.message); refresh(); }
   }
 
   const loginDlg = $('#login');
   loginDlg.addEventListener('cancel', e => e.preventDefault());
-  async function start() {
+  async function start(session) {
     loginDlg.close();
+    me = session.user.email;
     $('#logout').hidden = false;
-    needScroll = true;
+    scrollTarget = 'now';
     $('#storeNote').textContent = 'Календарь общий, синхронизируется между устройствами.';
     await refresh();
-    sb.channel('events-sync').on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, refresh).subscribe();
+    sb.channel('sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cards' }, refresh)
+      .subscribe();
   }
   async function boot() {
-    if (!remote) { items = load(); needScroll = true; render(); return; }
+    if (!remote) { items = load(); scrollTarget = 'now'; render(); return; }
     render();
     const { data } = await sb.auth.getSession();
-    if (data.session) start(); else loginDlg.showModal();
+    if (data.session) start(data.session); else loginDlg.showModal();
   }
   $('#loginForm').addEventListener('submit', async e => {
     e.preventDefault();
     const f = e.target;
-    const { error } = await sb.auth.signInWithPassword({ email: f.email.value.trim(), password: f.password.value });
+    const { data, error } = await sb.auth.signInWithPassword({ email: f.email.value.trim(), password: f.password.value });
     if (error) { $('#loginErr').textContent = 'Неверный email или пароль'; return; }
     f.password.value = ''; $('#loginErr').textContent = '';
-    start();
+    start(data.session);
   });
   async function logout() {
     await sb.auth.signOut();
     await sb.removeAllChannels();
-    items = []; $('#logout').hidden = true; render(); loginDlg.showModal();
+    items = []; cards = []; $('#logout').hidden = true; render(); loginDlg.showModal();
   }
   function seed() {
     const t = new Date(), y = t.getFullYear(), m = t.getMonth(), d = t.getDate();
@@ -349,7 +443,8 @@ textarea{resize:vertical;min-height:64px}
       { id: uid(), title: 'Оплатить страховку', type: 'task', cat: 'doc', start: at(-2), end: '', done: false, note: '' },
       { id: uid(), title: 'ДР Миши', type: 'fact', cat: 'other', start: at(20), end: '', note: '' },
     ];
-    try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) {}
+    cards = [{ id: uid(), title: 'Записаться к врачу', note: 'Терапевт, лучше утром', status: 'todo', author: me, assignee: '', eventId: '', created: new Date().toISOString() }];
+    items = list; save();
     return list;
   }
 
@@ -365,31 +460,97 @@ textarea{resize:vertical;min-height:64px}
     view = v;
     const h = v.mode === 'month' ? `m=${v.y}-${v.m + 1}` : `y=${v.y}`;
     history.pushState(null, '', '#' + h);
-    if (!needScroll) window.scrollTo({ top: 0 });
+    if (!scrollTarget) window.scrollTo({ top: 0 });
     render();
   }
   window.addEventListener('popstate', () => { view = parseHash(); render(); });
 
+  /* ---------- повторы ---------- */
+  const dn = s => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / 864e5;
+  const fromDn = n => new Date(n * 864e5).toISOString().slice(0, 10);
   const lastDay = it => it.end || it.start;
+  const durOf = i => i.end ? dn(i.end) - dn(i.start) : 0;
+
+  function nthWeekday(y, m, wd, n) {
+    if (n > 0) {
+      const first = new Date(y, m, 1).getDay();
+      const day = 1 + (wd - first + 7) % 7 + (n - 1) * 7;
+      return day <= daysIn(y, m) ? iso(y, m, day) : null;
+    }
+    const last = daysIn(y, m), lw = new Date(y, m, last).getDay();
+    return iso(y, m, last - (lw - wd + 7) % 7);
+  }
+  function occInMonth(i, y, m) {
+    const sd = +i.start.slice(8, 10), wd = new Date(i.start + 'T00:00').getDay();
+    if (i.repeat === 'monthly') return iso(y, m, Math.min(sd, daysIn(y, m)));
+    if (i.repeat === 'monthly_nth') return nthWeekday(y, m, wd, Math.ceil(sd / 7));
+    if (i.repeat === 'monthly_last') return nthWeekday(y, m, wd, -1);
+    if (i.repeat === 'yearly') {
+      const sm = +i.start.slice(5, 7) - 1;
+      return sm === m ? iso(y, m, Math.min(sd, daysIn(y, m))) : null;
+    }
+    return null;
+  }
+  // Дата начала повтора, который покрывает день d (или null).
+  function occStart(i, d) {
+    if (d < i.start) return null;
+    if (!i.repeat) return d <= lastDay(i) ? i.start : null;
+    const dur = durOf(i), D = dn(d);
+    let occ = null;
+    if (i.repeat === 'weekly' || i.repeat === 'biweekly') {
+      const off = (D - dn(i.start)) % (i.repeat === 'weekly' ? 7 : 14);
+      if (off <= dur) occ = fromDn(D - off);
+    } else {
+      const y = +d.slice(0, 4), m = +d.slice(5, 7) - 1;
+      const back = i.repeat === 'yearly' ? [[y, m], [y - 1, m]] : [[y, m], [y, m - 1]];
+      for (const [yy, mm] of back) {
+        const x = new Date(yy, mm, 1);
+        const c = i.repeat === 'yearly'
+          ? occInMonth(i, yy, +i.start.slice(5, 7) - 1)
+          : occInMonth(i, x.getFullYear(), x.getMonth());
+        if (c && c >= i.start && c <= d && D - dn(c) <= dur) { occ = c; break; }
+      }
+    }
+    if (occ && i.until && occ > i.until) return null;
+    return occ;
+  }
+  const isDone = (i, occ) => i.repeat ? (i.doneDates || []).includes(occ) : !!i.done;
+  const isOver = (i, occ) => i.type === 'task' && !isDone(i, occ) && fromDn(dn(occ) + durOf(i)) < todayISO();
+  // Ближайший незакрытый повтор задачи (смотрим месяц назад и год вперёд).
+  function nextOcc(i) {
+    const T = dn(todayISO());
+    for (let n = T - 31; n < T + 400; n++) {
+      const d = fromDn(n);
+      if (occStart(i, d) === d && !isDone(i, d)) return d;
+    }
+    return null;
+  }
+
   const itemsOn = d => items
-    .filter(i => i.start <= d && d <= lastDay(i))
-    .sort((a, b) => (a.type === b.type ? 0 : a.type === 'task' ? 1 : -1) || (a.done ? 1 : 0) - (b.done ? 1 : 0) || a.title.localeCompare(b.title));
-  const isOver = i => i.type === 'task' && !i.done && lastDay(i) < todayISO();
+    .map(i => ({ i, occ: occStart(i, d) }))
+    .filter(e => e.occ)
+    .sort((a, b) => (a.i.type === b.i.type ? 0 : a.i.type === 'task' ? 1 : -1) || isDone(a.i, a.occ) - isDone(b.i, b.occ) || a.i.title.localeCompare(b.i.title));
 
   /* ---------- render ---------- */
   function render() {
-    $('#hero').style.display = view.mode === 'year' ? '' : 'none';
-    $('#app').innerHTML = view.mode === 'year' ? yearHTML() : monthViewHTML();
+    const yearMode = view.mode === 'year';
+    $('#hero').style.display = yearMode ? '' : 'none';
+    $('#board').style.display = yearMode ? '' : 'none';
+    $('#app').innerHTML = yearMode ? yearHTML() : monthViewHTML();
     renderStats();
+    renderBoard();
     renderTodo();
-    if (needScroll) { needScroll = false; setTimeout(scrollToNow, 60); }
+    if (scrollTarget) setTimeout(scrollToTarget, 60);
   }
 
   function renderStats() {
-    const y = view.y;
-    const inYear = items.filter(i => i.start.startsWith(y) || lastDay(i).startsWith(y));
-    const open = items.filter(i => i.type === 'task' && !i.done).length;
-    const over = items.filter(isOver).length;
+    const y = String(view.y);
+    const inYear = items.filter(i => i.repeat
+      ? i.start <= `${y}-12-31` && (!i.until || i.until >= `${y}-01-01`)
+      : i.start.startsWith(y) || lastDay(i).startsWith(y));
+    const single = items.filter(i => i.type === 'task' && !i.repeat);
+    const open = single.filter(i => !i.done).length;
+    const over = single.filter(i => isOver(i, i.start)).length;
     $('#stats').innerHTML =
       `<div class="stat"><b>${inYear.length}</b><span>записей в ${y}</span></div>` +
       `<div class="stat"><b>${open}</b><span>открытых задач</span></div>` +
@@ -399,78 +560,81 @@ textarea{resize:vertical;min-height:64px}
   function legend() {
     return `<div class="legend">` +
       Object.values(CATS).map(c => `<span><i class="dot" style="--c:var(${c.v})"></i>${c.n}</span>`).join('') +
-      `<span><i class="ring"></i>просроченная задача</span></div>`;
+      `<span><i class="ring"></i>просроченная задача</span><span>↻ повтор</span></div>`;
   }
 
   function dayBg(list) {
-    const cats = [...new Set(list.map(i => i.cat))].map(k => CATS[k] ? CATS[k].c : CATS.other.c);
-    if (cats.length === 1) return cats[0];
-    const step = 100 / cats.length;
-    return `conic-gradient(${cats.map((c, i) => `${c} ${i * step}% ${(i + 1) * step}%`).join(',')})`;
+    const cols = [...new Set(list.map(e => e.i.cat))].map(k => (CATS[k] || CATS.other).c);
+    if (cols.length === 1) return cols[0];
+    const step = 100 / cols.length;
+    return `conic-gradient(${cols.map((c, i) => `${c} ${i * step}% ${(i + 1) * step}%`).join(',')})`;
   }
 
   function miniMonth(y, m) {
     const first = (new Date(y, m, 1).getDay() + 6) % 7;
-    const days = new Date(y, m + 1, 0).getDate();
-    const t = todayISO();
+    const days = daysIn(y, m);
+    const t = todayISO(), seen = new Set();
     let h = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'].map(w => `<div class="wd">${w}</div>`).join('');
     for (let i = 0; i < first; i++) h += '<div></div>';
     for (let d = 1; d <= days; d++) {
       const s = iso(y, m, d), list = itemsOn(s);
+      list.forEach(e => seen.add(e.i.id));
       const cls = ['d'];
       let style = '';
       if (list.length) {
         cls.push('has');
         style = ` style="background:${dayBg(list)}"`;
-        if (list.every(i => i.type === 'task' && i.done)) cls.push('alldone');
-        if (list.some(isOver)) cls.push('over');
+        if (list.every(e => e.i.type === 'task' && isDone(e.i, e.occ))) cls.push('alldone');
+        if (list.some(e => isOver(e.i, e.occ))) cls.push('over');
       }
       if (s === t) cls.push('today');
-      h += `<div class="${cls.join(' ')}"${style} title="${list.map(i => esc(i.title)).join(', ')}">${d}</div>`;
+      h += `<div class="${cls.join(' ')}"${style} title="${list.map(e => esc(e.i.title)).join(', ')}">${d}</div>`;
     }
-    return `<div class="mini">${h}</div>`;
+    return { html: `<div class="mini">${h}</div>`, cnt: seen.size };
   }
 
   function yearHTML() {
     const y = view.y, now = new Date();
-    let cards = '';
+    let out = '';
     for (let m = 0; m < 12; m++) {
-      const cnt = items.filter(i => i.start.slice(0, 7) <= `${y}-${pad(m + 1)}` && lastDay(i).slice(0, 7) >= `${y}-${pad(m + 1)}`).length;
+      const mm = miniMonth(y, m);
       const cur = now.getFullYear() === y && now.getMonth() === m;
-      cards += `<button class="mcard${cur ? ' current' : ''}" data-act="month" data-y="${y}" data-m="${m}">
-        <h3><span>${monthName(y, m)}</span><small>${cnt || ''}</small></h3>${miniMonth(y, m)}</button>`;
+      out += `<button class="mcard${cur ? ' current' : ''}" data-act="month" data-y="${y}" data-m="${m}">
+        <h3><span>${monthName(y, m)}</span><small>${mm.cnt || ''}</small></h3>${mm.html}</button>`;
     }
     return `<div class="bar">
       <button class="btn iconbtn" data-act="year" data-d="-1" aria-label="Предыдущий год">‹</button>
       <h2>${y}</h2>
       <button class="btn iconbtn" data-act="year" data-d="1" aria-label="Следующий год">›</button>
       ${legend()}
-    </div><div class="year">${cards}</div>`;
+    </div><div class="year">${out}</div>`;
   }
 
   function bigMonth(y, m) {
     const first = (new Date(y, m, 1).getDay() + 6) % 7;
-    const days = new Date(y, m + 1, 0).getDate();
+    const days = daysIn(y, m);
     const t = todayISO();
     const wds = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
     let h = '';
     for (let i = 0; i < first; i++) h += '<div class="cell pad"></div>';
     for (let d = 1; d <= days; d++) {
       const s = iso(y, m, d), wd = (first + d - 1) % 7;
-      const chips = itemsOn(s).map(i => chipHTML(i, s)).join('');
+      const chips = itemsOn(s).map(e => chipHTML(e, s)).join('');
       h += `<div class="cell${s === t ? ' today' : ''}${wd > 4 ? ' we' : ''}" data-act="add" data-date="${s}">
         <div class="n"><span>${d}</span><em>${wds[wd]}</em><button class="plus" data-act="add" data-date="${s}" aria-label="Добавить">+</button></div>${chips}</div>`;
     }
     return `<div class="mhead">${['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map(w => `<div>${w}</div>`).join('')}</div><div class="big">${h}</div>`;
   }
 
-  function chipHTML(i, day) {
+  function chipHTML({ i, occ }, day) {
     const c = CATS[i.cat] || CATS.other;
+    const done = isDone(i, occ);
     const marker = i.type === 'task'
-      ? `<button class="chk" data-act="toggle" data-id="${i.id}" aria-label="Выполнено"></button>`
+      ? `<button class="chk" data-act="toggle" data-id="${i.id}" data-occ="${occ}" aria-label="Выполнено"></button>`
       : `<span class="fact"></span>`;
-    const cont = i.start !== day ? `<span class="cont">↳</span>` : '';
-    return `<div class="chip ${i.type}${i.done ? ' done' : ''}${isOver(i) ? ' over' : ''}" style="--c:var(${c.v})" data-act="edit" data-id="${i.id}" title="${esc(i.note || '')}">${marker}${cont}<span class="t">${esc(i.title)}</span></div>`;
+    const cont = occ !== day ? `<span class="cont">↳</span>` : '';
+    const rep = i.repeat ? `<span class="rep" title="Повторяется">↻</span>` : '';
+    return `<div class="chip ${i.type}${done ? ' done' : ''}${isOver(i, occ) ? ' over' : ''}" style="--c:var(${c.v})" data-act="edit" data-id="${i.id}" title="${esc(i.note || '')}">${marker}${cont}<span class="t">${esc(i.title)}</span>${rep}</div>`;
   }
 
   function monthViewHTML() {
@@ -490,19 +654,85 @@ textarea{resize:vertical;min-height:64px}
     </div>`;
   }
 
+  /* ---------- доска «без даты» ---------- */
+  const AV_COLORS = ['#e0664a', '#4a8fe7', '#3dbb8a', '#a87ae0', '#f0a93b'];
+  function avatar(email) {
+    if (!email) return '';
+    let h = 0; for (const ch of email) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    return `<span class="av" style="--c:${AV_COLORS[h % AV_COLORS.length]}" title="${esc(email)}">${esc(email[0].toUpperCase())}</span>`;
+  }
+
+  function cardHTML(c) {
+    const ev = c.eventId && items.find(i => i.id === c.eventId);
+    let acts = '';
+    if (c.status === 'todo') acts = `<button class="kbtn" data-act="card-take" data-id="${c.id}">Беру</button>`;
+    if (c.status !== 'done') acts += `<button class="kbtn go" data-act="card-schedule" data-id="${c.id}">📅 Назначить дату</button>`;
+    if (ev) acts += `<button class="kbtn go" data-act="card-goto" data-id="${c.id}">📅 ${fmtShort(ev.start)}</button>`;
+    const who = avatar(c.author) + (c.assignee && c.assignee !== c.author ? `<span class="arrow">→</span>${avatar(c.assignee)}` : '');
+    return `<div class="kcard" draggable="true" data-act="card-edit" data-id="${c.id}">
+      <b>${esc(c.title)}</b>${c.note ? `<p>${esc(c.note)}</p>` : ''}
+      <div class="kfoot">${who}<div class="spacer"></div>${acts}</div></div>`;
+  }
+
+  function renderBoard() {
+    const open = cards.filter(c => c.status !== 'done').length;
+    $('#boardBtn').textContent = `Без даты · ${open}`;
+    const LIMIT = 6;
+    const cols = Object.entries(COLS).map(([st, name]) => {
+      let list = cards.filter(c => c.status === st)
+        .sort((a, b) => st === 'done' ? String(b.created).localeCompare(String(a.created)) : String(a.created).localeCompare(String(b.created)));
+      const more = st === 'done' && list.length > LIMIT ? list.length - LIMIT : 0;
+      if (more) list = list.slice(0, LIMIT);
+      return `<div class="col" data-status="${st}">
+        <h4><span>${name}</span><span>${cards.filter(c => c.status === st).length}</span></h4>
+        ${list.map(cardHTML).join('') || `<div class="cempty">${st === 'todo' ? 'Пусто — добавьте карточку' : 'Перетащите сюда или нажмите на карточку'}</div>`}
+        ${more ? `<div class="more">и ещё ${more}</div>` : ''}
+      </div>`;
+    }).join('');
+    $('#board').innerHTML = `<header><h2>Без даты</h2>
+      <span class="sub">Дела, у которых пока нет дня. Назначьте дату — и появится событие в календаре.</span>
+      <div class="spacer"></div><button class="btn" data-act="card-add">+ Карточка</button></header>
+      ${cardsMissing ? `<p class="nhint" style="color:var(--danger)">Доска не подключена к базе: выполните supabase-update.sql в Supabase → SQL Editor.</p>` : ''}
+      <div class="cols">${cols}</div>`;
+  }
+
+  // drag & drop между колонками (на компьютере; на телефоне — кнопки и окно карточки)
+  let dragId = null;
+  document.addEventListener('dragstart', e => { const k = e.target.closest && e.target.closest('.kcard'); if (k) { dragId = k.dataset.id; e.dataTransfer.effectAllowed = 'move'; } });
+  document.addEventListener('dragover', e => { const col = e.target.closest && e.target.closest('.col'); if (col && dragId) { e.preventDefault(); document.querySelectorAll('.col.over').forEach(c => c !== col && c.classList.remove('over')); col.classList.add('over'); } });
+  document.addEventListener('dragleave', e => { const col = e.target.closest && e.target.closest('.col'); if (col && !col.contains(e.relatedTarget)) col.classList.remove('over'); });
+  document.addEventListener('drop', e => {
+    const col = e.target.closest && e.target.closest('.col');
+    if (!col || !dragId) return;
+    e.preventDefault();
+    const c = cards.find(x => x.id === dragId); dragId = null;
+    if (c && c.status !== col.dataset.status) {
+      c.status = col.dataset.status;
+      if (c.status !== 'todo' && !c.assignee) c.assignee = me;
+      render(); persist('cards', c);
+    } else render();
+  });
+  document.addEventListener('dragend', () => { dragId = null; document.querySelectorAll('.col.over').forEach(c => c.classList.remove('over')); });
+
+  /* ---------- список задач ---------- */
   function renderTodo() {
     const t = todayISO();
-    let list = items.filter(i => i.type === 'task');
-    const open = list.filter(i => !i.done).sort((a, b) => a.start.localeCompare(b.start));
-    const done = list.filter(i => i.done).sort((a, b) => b.start.localeCompare(a.start));
+    const open = [], done = [];
+    for (const i of items) {
+      if (i.type !== 'task') continue;
+      if (i.repeat) { const o = nextOcc(i); if (o) open.push({ i, occ: o }); }
+      else (i.done ? done : open).push({ i, occ: i.start });
+    }
+    open.sort((a, b) => a.occ.localeCompare(b.occ));
+    done.sort((a, b) => b.occ.localeCompare(a.occ));
     const shown = todoTab === 'open' ? open : done;
-    const rows = shown.map(i => {
+    const rows = shown.map(({ i, occ }) => {
       const c = CATS[i.cat] || CATS.other;
-      const late = isOver(i);
-      const when = i.end ? `${fmt(i.start)} — ${fmt(i.end)}` : fmt(i.start);
-      return `<div class="trow${i.done ? ' done' : ''}" style="--c:var(${c.v})">
-        <div class="chip ${i.done ? 'done' : ''}" style="--c:var(${c.v})"><button class="chk" data-act="toggle" data-id="${i.id}" aria-label="Выполнено"></button></div>
-        <div class="info" data-act="edit" data-id="${i.id}"><b>${esc(i.title)}</b><small class="${late ? 'late' : ''}">${when}${late ? ' · просрочено' : i.start === t ? ' · сегодня' : ''}</small></div>
+      const late = isOver(i, occ), dn_ = isDone(i, occ);
+      const when = i.end && !i.repeat ? `${fmt(i.start)} — ${fmt(i.end)}` : fmt(occ);
+      return `<div class="trow${dn_ ? ' done' : ''}" style="--c:var(${c.v})">
+        <div class="chip ${dn_ ? 'done' : ''}" style="--c:var(${c.v})"><button class="chk" data-act="toggle" data-id="${i.id}" data-occ="${occ}" aria-label="Выполнено"></button></div>
+        <div class="info" data-act="edit" data-id="${i.id}"><b>${esc(i.title)}${i.repeat ? ' <span class="rep">↻</span>' : ''}</b><small class="${late ? 'late' : ''}">${when}${late ? ' · просрочено' : occ === t ? ' · сегодня' : ''}</small></div>
         <span class="tag">${c.n}</span></div>`;
     }).join('');
     $('#todo').innerHTML = `<header><h2>Задачи</h2>
@@ -512,17 +742,42 @@ textarea{resize:vertical;min-height:64px}
       ${rows || `<div class="empty">${todoTab === 'open' ? 'Открытых задач нет — отличный день.' : 'Пока ничего не выполнено.'}</div>`}`;
   }
 
-  /* ---------- dialog ---------- */
+  /* ---------- окно события ---------- */
   const dlg = $('#dlg'), form = $('#form');
   $('#cats').innerHTML = Object.entries(CATS).map(([k, c], i) =>
     `<label style="--c:var(${c.v})"><input type="radio" name="cat" value="${k}"${i === 0 ? ' checked' : ''}><i class="dot" style="--c:var(${c.v})"></i>${c.n}</label>`).join('');
   let editing = null;
+  let pendingCard = null;
+
+  const GENDER = [2, 0, 0, 1, 0, 1, 1]; // вс — ср.р., пн/вт/чт — м.р., ср/пт/сб — ж.р.
+  const ORD = [['первый', 'второй', 'третий', 'четвёртый', 'последний'], ['первая', 'вторая', 'третья', 'четвёртая', 'последняя'], ['первое', 'второе', 'третье', 'четвёртое', 'последнее']];
+  function repeatOptions() {
+    const s = form.start.value || todayISO();
+    const d = new Date(s + 'T00:00'), sd = d.getDate(), wd = d.getDay();
+    const wdName = d.toLocaleDateString('ru-RU', { weekday: 'long' });
+    const n = Math.ceil(sd / 7), g = GENDER[wd];
+    const opts = [['', 'Не повторять'], ['weekly', 'Каждую неделю'], ['biweekly', 'Каждые 2 недели'], ['monthly', `Каждый месяц, ${sd}-го числа`]];
+    if (n <= 4) opts.push(['monthly_nth', `Каждый месяц, ${ORD[g][n - 1]} ${wdName}`]);
+    if (sd + 7 > daysIn(d.getFullYear(), d.getMonth())) opts.push(['monthly_last', `Каждый месяц, ${ORD[g][4]} ${wdName}`]);
+    opts.push(['yearly', `Каждый год, ${fmt(s)}`]);
+    const cur = form.repeat.value;
+    form.repeat.innerHTML = opts.map(([v, t]) => `<option value="${v}">${t}</option>`).join('');
+    form.repeat.value = opts.some(o => o[0] === cur) ? cur : '';
+    syncRepeat();
+  }
+  function syncRepeat() {
+    const on = !!form.repeat.value;
+    $('#untilRow').style.visibility = on ? '' : 'hidden';
+    $('#repeatHint').hidden = !(on && editing && editing.repeat);
+    syncDone();
+  }
 
   function openDialog(item, defaults = {}) {
     editing = item || null;
+    pendingCard = null;
     $('#dtitle').textContent = item ? 'Редактировать' : 'Новая запись';
     $('#del').style.display = item ? '' : 'none';
-    const v = item || { title: '', type: 'fact', cat: 'travel', start: todayISO(), end: '', note: '', done: false, ...defaults };
+    const v = item || { title: '', type: 'fact', cat: 'travel', start: todayISO(), end: '', note: '', done: false, repeat: '', until: '', ...defaults };
     form.title.value = v.title;
     form.type.value = v.type;
     form.cat.value = v.cat;
@@ -531,8 +786,11 @@ textarea{resize:vertical;min-height:64px}
     form.note.value = v.note || '';
     form.done.checked = !!v.done;
     form.notion.value = v.notion || '';
+    form.until.value = v.until || '';
+    form.repeat.innerHTML = `<option value="${esc(v.repeat || '')}"></option>`;
+    form.repeat.value = v.repeat || '';
+    repeatOptions();
     syncNotion(true);
-    syncDone();
     dlg.showModal();
     form.title.focus();
   }
@@ -557,45 +815,140 @@ textarea{resize:vertical;min-height:64px}
     if (fr.hidden) { fr.src = embedURL(x); fr.hidden = false; dlg.classList.add('wide'); $('#notionEmbed').textContent = 'Скрыть'; }
     else syncNotion(true);
   };
-  const syncDone = () => { $('#doneRow').style.display = form.type.value === 'task' ? '' : 'none'; };
-  form.addEventListener('change', e => { if (e.target.name === 'type') syncDone(); });
+  const syncDone = () => { $('#doneRow').style.display = form.type.value === 'task' && !form.repeat.value ? '' : 'none'; };
+  form.addEventListener('change', e => {
+    if (e.target.name === 'type') syncDone();
+    if (e.target.name === 'repeat') syncRepeat();
+    if (e.target.name === 'start') repeatOptions();
+  });
   $('#cancel').onclick = () => dlg.close();
   dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
   $('#del').onclick = () => {
-    if (editing && confirm('Удалить запись?')) { const id = editing.id; items = items.filter(i => i !== editing); dlg.close(); render(); drop(id); }
+    if (!editing) return;
+    if (!confirm(editing.repeat ? 'Удалить событие со всеми повторами?' : 'Удалить запись?')) return;
+    const id = editing.id;
+    items = items.filter(i => i !== editing);
+    cards.forEach(c => { if (c.eventId === id) c.eventId = ''; });
+    dlg.close(); render(); drop('events', id);
   };
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', async e => {
     e.preventDefault();
     let start = form.start.value, end = form.end.value;
     if (end && end < start) [start, end] = [end, start];
     if (end === start) end = '';
+    const repeat = form.repeat.value;
     const data = {
       title: form.title.value.trim(), type: form.type.value, cat: form.cat.value,
-      start, end, note: form.note.value.trim(), notion: (safeURL(form.notion.value) || { href: '' }).href, done: form.type.value === 'task' && form.done.checked,
+      start, end, note: form.note.value.trim(), notion: (safeURL(form.notion.value) || { href: '' }).href,
+      done: form.type.value === 'task' && !repeat && form.done.checked,
+      repeat, until: repeat ? form.until.value : '',
     };
     if (!data.title) return;
     let rec = editing;
-    if (rec) Object.assign(rec, data); else { rec = { id: uid(), ...data }; items.push(rec); }
-    dlg.close(); render(); persist(rec);
+    if (rec) Object.assign(rec, data); else { rec = { id: uid(), doneDates: [], ...data }; items.push(rec); }
+    const card = pendingCard; pendingCard = null;
+    if (card) { card.eventId = rec.id; card.status = 'done'; if (!card.assignee) card.assignee = me; }
+    dlg.close(); render();
+    const ok = await persist('events', rec);
+    if (ok !== false && card) persist('cards', card);
   });
 
-  /* ---------- events ---------- */
+  /* ---------- окно карточки ---------- */
+  const cdlg = $('#cardDlg'), cform = $('#cardForm');
+  let editingCard = null;
+  function openCard(c) {
+    editingCard = c || null;
+    $('#ctitle').textContent = c ? 'Карточка' : 'Новая карточка';
+    $('#cdel').style.display = c ? '' : 'none';
+    cform.title.value = c ? c.title : '';
+    cform.note.value = c ? c.note : '';
+    cform.status.value = c ? c.status : 'todo';
+    const ev = c && c.eventId && items.find(i => i.id === c.eventId);
+    $('#cardMeta').innerHTML = c
+      ? [c.author && `Поставил(а): ${esc(c.author)}`, c.assignee && `Взял(а): ${esc(c.assignee)}`, ev && `Событие: ${fmt(ev.start)}`].filter(Boolean).join(' · ')
+      : '';
+    $('#csched').textContent = ev ? '📅 Перенести / ещё дата' : '📅 Назначить дату';
+    cdlg.showModal();
+    cform.title.focus();
+  }
+  function applyCardForm() {
+    const title = cform.title.value.trim();
+    if (!title) { cform.reportValidity(); return null; }
+    let c = editingCard;
+    if (!c) { c = { id: uid(), author: me, assignee: '', eventId: '', created: new Date().toISOString() }; cards.push(c); }
+    const status = cform.status.value;
+    Object.assign(c, { title, note: cform.note.value.trim(), status });
+    if (status !== 'todo' && !c.assignee) c.assignee = me;
+    return c;
+  }
+  cform.addEventListener('submit', e => {
+    e.preventDefault();
+    const c = applyCardForm(); if (!c) return;
+    cdlg.close(); render(); persist('cards', c);
+  });
+  $('#ccancel').onclick = () => cdlg.close();
+  cdlg.addEventListener('click', e => { if (e.target === cdlg) cdlg.close(); });
+  $('#cdel').onclick = () => {
+    if (!editingCard || !confirm('Удалить карточку? Созданное из неё событие останется в календаре.')) return;
+    const id = editingCard.id;
+    cards = cards.filter(c => c !== editingCard);
+    cdlg.close(); render(); drop('cards', id);
+  };
+  $('#csched').onclick = async () => {
+    const c = applyCardForm(); if (!c) return;
+    cdlg.close(); render();
+    await persist('cards', c);
+    scheduleCard(c);
+  };
+  function scheduleCard(c) {
+    openDialog(null, { title: c.title, note: c.note, type: 'fact', cat: 'todo', start: todayISO() });
+    $('#dtitle').textContent = 'Назначить дату';
+    pendingCard = c;
+  }
+
+  /* ---------- клики ---------- */
   document.addEventListener('click', e => {
     const el = e.target.closest('[data-act]');
     if (!el) return;
-    const a = el.dataset.act, find = id => items.find(i => i.id === id);
-    if (a === 'toggle') { e.stopPropagation(); const i = find(el.dataset.id); i.done = !i.done; render(); persist(i); }
+    const a = el.dataset.act, find = id => items.find(i => i.id === id), findCard = id => cards.find(c => c.id === id);
+    if (a === 'toggle') {
+      e.stopPropagation();
+      const i = find(el.dataset.id), occ = el.dataset.occ;
+      if (i.repeat) {
+        const s = new Set(i.doneDates || []);
+        s.has(occ) ? s.delete(occ) : s.add(occ);
+        i.doneDates = [...s].sort();
+      } else i.done = !i.done;
+      render(); persist('events', i);
+    }
     else if (a === 'edit') { e.stopPropagation(); openDialog(find(el.dataset.id)); }
     else if (a === 'add') { e.stopPropagation(); openDialog(null, { start: el.dataset.date || todayISO() }); }
     else if (a === 'add-task') openDialog(null, { type: 'task', cat: 'todo' });
+    else if (a === 'card-add') openCard(null);
+    else if (a === 'card-edit') openCard(findCard(el.dataset.id));
+    else if (a === 'card-take') {
+      e.stopPropagation();
+      const c = findCard(el.dataset.id); c.status = 'doing'; c.assignee = me;
+      render(); persist('cards', c);
+    }
+    else if (a === 'card-schedule') { e.stopPropagation(); scheduleCard(findCard(el.dataset.id)); }
+    else if (a === 'card-goto') {
+      e.stopPropagation();
+      const ev = find(findCard(el.dataset.id).eventId);
+      if (ev) { const [y, m] = ev.start.split('-').map(Number); scrollTarget = 'now'; go({ mode: 'month', y, m: m - 1 }); openDialog(ev); }
+    }
+    else if (a === 'board') {
+      scrollTarget = 'board';
+      if (view.mode !== 'year') go({ mode: 'year', y: view.y }); else render();
+    }
     else if (a === 'month') go({ mode: 'month', y: +el.dataset.y, m: +el.dataset.m });
     else if (a === 'year-view') go({ mode: 'year', y: view.y });
     else if (a === 'year') go({ mode: 'year', y: view.y + +el.dataset.d });
     else if (a === 'step') { const n = new Date(view.y, view.m + +el.dataset.d, 1); go({ mode: 'month', y: n.getFullYear(), m: n.getMonth() }); }
-    else if (a === 'today') { needScroll = true; const n = new Date(); go({ mode: 'year', y: n.getFullYear() }); }
+    else if (a === 'today') { scrollTarget = 'now'; const n = new Date(); go({ mode: 'year', y: n.getFullYear() }); }
     else if (a === 'tab') { todoTab = el.dataset.tab; renderTodo(); }
     else if (a === 'export') {
-      const url = URL.createObjectURL(new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' }));
+      const url = URL.createObjectURL(new Blob([JSON.stringify({ items, cards }, null, 2)], { type: 'application/json' }));
       const l = document.createElement('a'); l.href = url; l.download = 'calendar.json'; l.click(); URL.revokeObjectURL(url);
     }
     else if (a === 'import') $('#file').click();
@@ -605,9 +958,16 @@ textarea{resize:vertical;min-height:64px}
     const f = e.target.files[0]; if (!f) return;
     try {
       const data = JSON.parse(await f.text());
-      if (!Array.isArray(data)) throw 0;
-      items = data.filter(i => i && i.title && /^\d{4}-\d{2}-\d{2}$/.test(i.start)).map(i => ({ id: uid(), type: 'fact', cat: 'other', ...i }));
-      render(); persist(...items);
+      const evs = Array.isArray(data) ? data : data.items;
+      if (!Array.isArray(evs)) throw 0;
+      // Новые id для событий; ссылки карточек на события переводим на новые id.
+      const idMap = {};
+      items = evs.filter(i => i && i.title && /^\d{4}-\d{2}-\d{2}$/.test(i.start))
+        .map(i => { const id = uid(); idMap[i.id] = id; return { type: 'fact', cat: 'other', doneDates: [], ...i, id }; });
+      const cds = Array.isArray(data.cards) ? data.cards : [];
+      cards = cds.filter(c => c && c.title).map(c => ({ status: 'todo', note: '', author: me, assignee: '', created: new Date().toISOString(), ...c, id: uid(), eventId: idMap[c.eventId] || '' }));
+      render();
+      if (await persist('events', ...items) !== false && cards.length) persist('cards', ...cards);
     } catch (err) { alert('Не удалось прочитать файл'); }
     e.target.value = '';
   });
