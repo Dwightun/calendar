@@ -409,11 +409,21 @@ select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(-
     scrollTarget = 'now';
     $('#storeNote').textContent = 'Календарь общий, синхронизируется между устройствами.';
     await refresh();
+    syncTz();
     sb.channel('sync')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cards' }, refresh)
       .subscribe();
   }
+  // Часовой пояс устройства — для Telegram-сводки (бот шлёт её в 11:00 по этому поясу).
+  function syncTz() {
+    if (!remote || !me.includes('@')) return;
+    let tz = '';
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) {}
+    if (tz) sb.from('bot_state').upsert({ id: 1, tz, tz_updated_by: me, updated_at: new Date().toISOString() }).then(() => {});
+  }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncTz(); });
+
   async function boot() {
     if (!remote) { items = load(); scrollTarget = 'now'; render(); return; }
     render();
